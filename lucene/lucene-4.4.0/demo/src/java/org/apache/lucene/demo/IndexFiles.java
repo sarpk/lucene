@@ -58,9 +58,9 @@ public class IndexFiles {
     String indexPath = "index";
     String docsPath = null;
     boolean create = true;
-    indexPath = "C:\\crawl\\index";
-    docsPath = "C:\\crawl\\download";
- /*   for(int i=0;i<args.length;i++) {
+    indexPath = "C:\\crawls\\index";
+    docsPath = "C:\\crawls\\download";
+    for(int i=0;i<args.length;i++) {
       if ("-index".equals(args[i])) {
         indexPath = args[i+1];
         i++;
@@ -70,7 +70,7 @@ public class IndexFiles {
       } else if ("-update".equals(args[i])) {
         create = false;
       }
-    }*/
+    }
 
     if (docsPath == null) {
       System.err.println("Usage: " + usage);
