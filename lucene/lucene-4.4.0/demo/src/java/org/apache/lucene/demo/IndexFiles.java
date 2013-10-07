@@ -207,7 +207,7 @@ public class IndexFiles {
           if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
             // New index, so we just add the document (no old document can be there):
             System.out.println("adding " + file);
-            String contents = readFile(file.toString(), StandardCharsets.UTF_8).toLowerCase();
+            /*String contents = readFile(file.toString(), StandardCharsets.UTF_8).toLowerCase();
             if (contents.contains("citation")) {
             	textField.setBoost(0.001f);
             }
@@ -219,7 +219,7 @@ public class IndexFiles {
             }
             if (contents.contains("search results")) {
             	textField.setBoost(0.01f);
-            }
+            }*/
             writer.addDocument(doc);
           } else {
             // Existing index (an old copy of this document may have been indexed) so 

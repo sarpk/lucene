@@ -186,12 +186,12 @@ public class SearchFiles {
         }
 
         Document doc = searcher.doc(hits[i].doc);
-        System.out.println(doc);
+        //System.out.println(doc);
         String path = doc.get("path");
         if (path != null) {
         	
           System.out.println((i+1) + ". " + path);
-          System.out.println(searcher.explain(bquery, hits[i].doc).toString());
+          //System.out.println(searcher.explain(bquery, hits[i].doc).toString());
           
           String title = doc.get("title");
           if (title != null) {

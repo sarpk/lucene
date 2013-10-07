@@ -32,7 +32,7 @@ public class WordNetQueryProcessor {
 		originalQuery = parser.parse(queryString);
 		//Split queries first
 		String[] parsedQueriesStr = originalQuery.toString(parser.getField()).split(" ");
-		String[] nonParsedQueriesStr = originalQuery.toString(parser.getField()).split(" ");
+		String[] nonParsedQueriesStr = queryString.split(" ");
 		
 		HashSet<String> allSynonyms = new HashSet<String>();
 				
@@ -118,9 +118,9 @@ public class WordNetQueryProcessor {
 			}
 		}
 		
-		for(String s : allWords) {
+		/*for(String s : allWords) {
 			System.out.println(s);
-		}
+		}*/
 		return allWords;
 	}
 	
