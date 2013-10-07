@@ -17,28 +17,33 @@ package org.apache.lucene.demo;
  * limitations under the License.
  */
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.LongField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Version;
 
 /** Index all text files under a directory.
  * <p>
@@ -58,8 +63,8 @@ public class IndexFiles {
     String indexPath = "index";
     String docsPath = null;
     boolean create = true;
-    indexPath = "C:\\crawls\\index";
-    docsPath = "C:\\crawls\\download";
+    indexPath = "C:\\crawl\\experiment\\index";
+    docsPath = "C:\\crawl\\experiment\\docs";
     for(int i=0;i<args.length;i++) {
       if ("-index".equals(args[i])) {
         indexPath = args[i+1];
@@ -88,7 +93,7 @@ public class IndexFiles {
       System.out.println("Indexing to directory '" + indexPath + "'...");
 
       Directory dir = FSDirectory.open(new File(indexPath));
-      Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_44);
+      Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_44);
       IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_44, analyzer);
 
       if (create) {
@@ -128,7 +133,12 @@ public class IndexFiles {
        "\n with message: " + e.getMessage());
     }
   }
-
+  static String readFile(String path, Charset encoding) 
+		  throws IOException 
+		{
+		  byte[] encoded = Files.readAllBytes(Paths.get(path));
+		  return encoding.decode(ByteBuffer.wrap(encoded)).toString();
+		}
   /**
    * Indexes the given file using the given writer, or if a directory is given,
    * recurses over files and directories found under the given directory.
@@ -178,7 +188,6 @@ public class IndexFiles {
           // or positional information:
           Field pathField = new StringField("path", file.getPath(), Field.Store.YES);
           doc.add(pathField);
-
           // Add the last modified date of the file a field named "modified".
           // Use a LongField that is indexed (i.e. efficiently filterable with
           // NumericRangeFilter).  This indexes to milli-second resolution, which
@@ -192,11 +201,25 @@ public class IndexFiles {
           // so that the text of the file is tokenized and indexed, but not stored.
           // Note that FileReader expects the file to be in UTF-8 encoding.
           // If that's not the case searching for special characters will fail.
-          doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(fis, "UTF-8"))));
+          Field textField = new TextField("contents", new BufferedReader(new InputStreamReader(fis, "UTF-8")));
+          doc.add(textField);
 
           if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
             // New index, so we just add the document (no old document can be there):
             System.out.println("adding " + file);
+            String contents = readFile(file.toString(), StandardCharsets.UTF_8).toLowerCase();
+            if (contents.contains("citation")) {
+            	textField.setBoost(0.001f);
+            }
+            if (contents.contains("publisher")) {
+            	textField.setBoost(0.001f);
+            }
+            if (contents.contains("publication")) {
+            	textField.setBoost(0.001f);
+            }
+            if (contents.contains("search results")) {
+            	textField.setBoost(0.01f);
+            }
             writer.addDocument(doc);
           } else {
             // Existing index (an old copy of this document may have been indexed) so 

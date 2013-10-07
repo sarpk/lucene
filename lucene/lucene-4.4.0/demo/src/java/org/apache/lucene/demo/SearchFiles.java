@@ -25,11 +25,13 @@ import java.io.InputStreamReader;
 import java.util.Date;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -41,7 +43,7 @@ import org.apache.lucene.util.Version;
 public class SearchFiles {
 
   private SearchFiles() {}
-
+  private static Query query2;
   /** Simple command-line based search demo. */
   public static void main(String[] args) throws Exception {
     String usage =
@@ -51,7 +53,7 @@ public class SearchFiles {
       System.exit(0);
     }
 
-    String index = "C:\\crawl\\index";
+    String index = "C:\\crawl\\experiment\\index";
     String field = "contents";
     String queries = null;
     int repeat = 0;
@@ -86,10 +88,10 @@ public class SearchFiles {
         i++;
       }
     }
-    
+    //raw = true;
     IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(index)));
     IndexSearcher searcher = new IndexSearcher(reader);
-    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_44);
+    Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_44);
 
     BufferedReader in = null;
     if (queries != null) {
@@ -125,7 +127,7 @@ public class SearchFiles {
         Date end = new Date();
         System.out.println("Time: "+(end.getTime()-start.getTime())+"ms");
       }
-
+      query2 = parser.parse("bike");
       doPagingSearch(in, searcher, query, hitsPerPage, raw, queries == null && queryString == null);
 
       if (queryString != null) {
@@ -147,11 +149,14 @@ public class SearchFiles {
    */
   public static void doPagingSearch(BufferedReader in, IndexSearcher searcher, Query query, 
                                      int hitsPerPage, boolean raw, boolean interactive) throws IOException {
- 
+	  query2.setBoost(0.1f);
     // Collect enough docs to show 5 pages
-    TopDocs results = searcher.search(query, 5 * hitsPerPage);
+	  BooleanQuery booleanQuery = new BooleanQuery();
+		booleanQuery.add(query, BooleanClause.Occur.MUST);
+		booleanQuery.add(query2, BooleanClause.Occur.SHOULD);
+    TopDocs results = searcher.search(booleanQuery, 5 * hitsPerPage);
     ScoreDoc[] hits = results.scoreDocs;
-    
+  
     int numTotalHits = results.totalHits;
     System.out.println(numTotalHits + " total matching documents");
 
@@ -167,9 +172,8 @@ public class SearchFiles {
           break;
         }
 
-        hits = searcher.search(query, numTotalHits).scoreDocs;
+        hits = searcher.search(booleanQuery, numTotalHits).scoreDocs;
       }
-      
       end = Math.min(hits.length, start + hitsPerPage);
       
       for (int i = start; i < end; i++) {
@@ -179,9 +183,13 @@ public class SearchFiles {
         }
 
         Document doc = searcher.doc(hits[i].doc);
+        System.out.println(doc);
         String path = doc.get("path");
         if (path != null) {
+        	
           System.out.println((i+1) + ". " + path);
+          System.out.println(searcher.explain(booleanQuery, hits[i].doc).toString());
+          
           String title = doc.get("title");
           if (title != null) {
             System.out.println("   Title: " + doc.get("title"));
