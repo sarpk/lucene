@@ -110,8 +110,8 @@ public class WordNetQueryProcessor {
 			ISynset synset = word.getSynset();
 			// iterate over words associated with the synset
 			for(IWord w : synset.getWords()) {
-				if (!firstword.getLemma().equals(w.getLemma())) {
-					String currentLemma = w.getLemma();
+				String currentLemma = w.getLemma();
+				if (!firstword.getLemma().equals(w.getLemma()) && currentLemma.matches("^[a-zA-Z\\_]+")) {
 					currentLemma = currentLemma.replace("_", " ");
 					allWords.add(currentLemma);
 				}

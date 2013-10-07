@@ -30,15 +30,16 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
+import similarity.CustomSimilarity;
 import wordnet.WordNetQueryProcessor;
 
 /** Simple command-line based search demo. */
@@ -116,6 +117,9 @@ public class SearchFiles {
       if (line.length() == 0) {
         break;
       }
+
+      Similarity sim = new CustomSimilarity();
+      searcher.setSimilarity(sim);
       
       Query query = parser.parse(line);
       
