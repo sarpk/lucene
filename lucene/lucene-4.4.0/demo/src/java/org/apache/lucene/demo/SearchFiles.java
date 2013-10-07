@@ -39,11 +39,12 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
+import wordnet.WordNetQueryProcessor;
+
 /** Simple command-line based search demo. */
 public class SearchFiles {
 
   private SearchFiles() {}
-  private static Query query2;
   /** Simple command-line based search demo. */
   public static void main(String[] args) throws Exception {
     String usage =
@@ -117,6 +118,8 @@ public class SearchFiles {
       }
       
       Query query = parser.parse(line);
+      
+      WordNetQueryProcessor queryProcess = new WordNetQueryProcessor(parser, line);
       System.out.println("Searching for: " + query.toString(field));
             
       if (repeat > 0) {                           // repeat & time as benchmark
@@ -127,8 +130,8 @@ public class SearchFiles {
         Date end = new Date();
         System.out.println("Time: "+(end.getTime()-start.getTime())+"ms");
       }
-      query2 = parser.parse("bike");
-      doPagingSearch(in, searcher, query, hitsPerPage, raw, queries == null && queryString == null);
+      BooleanQuery bquery = queryProcess.getBooleanQuery();
+      doPagingSearch(in, searcher, bquery, hitsPerPage, raw, queries == null && queryString == null);
 
       if (queryString != null) {
         break;
@@ -147,14 +150,14 @@ public class SearchFiles {
    * is executed another time and all hits are collected.
    * 
    */
-  public static void doPagingSearch(BufferedReader in, IndexSearcher searcher, Query query, 
+  public static void doPagingSearch(BufferedReader in, IndexSearcher searcher, BooleanQuery bquery, 
                                      int hitsPerPage, boolean raw, boolean interactive) throws IOException {
-	  query2.setBoost(0.1f);
+	 /* query2.setBoost(0.1f);
     // Collect enough docs to show 5 pages
 	  BooleanQuery booleanQuery = new BooleanQuery();
 		booleanQuery.add(query, BooleanClause.Occur.MUST);
-		booleanQuery.add(query2, BooleanClause.Occur.SHOULD);
-    TopDocs results = searcher.search(booleanQuery, 5 * hitsPerPage);
+		booleanQuery.add(query2, BooleanClause.Occur.SHOULD);*/
+    TopDocs results = searcher.search(bquery, 5 * hitsPerPage);
     ScoreDoc[] hits = results.scoreDocs;
   
     int numTotalHits = results.totalHits;
@@ -172,7 +175,7 @@ public class SearchFiles {
           break;
         }
 
-        hits = searcher.search(booleanQuery, numTotalHits).scoreDocs;
+        hits = searcher.search(bquery, numTotalHits).scoreDocs;
       }
       end = Math.min(hits.length, start + hitsPerPage);
       
@@ -188,7 +191,7 @@ public class SearchFiles {
         if (path != null) {
         	
           System.out.println((i+1) + ". " + path);
-          System.out.println(searcher.explain(booleanQuery, hits[i].doc).toString());
+          System.out.println(searcher.explain(bquery, hits[i].doc).toString());
           
           String title = doc.get("title");
           if (title != null) {
