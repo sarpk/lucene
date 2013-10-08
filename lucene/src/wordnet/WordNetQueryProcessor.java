@@ -25,7 +25,9 @@ import edu.mit.jwi.item.POS;
 public class WordNetQueryProcessor {
 	private Query originalQuery = null;
 	private BooleanQuery booleanQuery = null;
-	private static float boostVal = 0.1f;
+	private QueryParser parser = null;
+	private static float synonymBoostVal = 0.1f;
+	private static float proximityBoostVal = 2.0f;
 	private static String wnhome = "C:\\Program Files (x86)\\WordNet\\2.1\\";
 	public WordNetQueryProcessor(QueryParser parser, String queryString) throws ParseException, IOException {
 		// set the query
@@ -33,7 +35,7 @@ public class WordNetQueryProcessor {
 		//Split queries first
 		String[] parsedQueriesStr = originalQuery.toString(parser.getField()).split(" ");
 		String[] nonParsedQueriesStr = queryString.split(" ");
-		
+		this.parser = parser;
 		HashSet<String> allSynonyms = new HashSet<String>();
 				
 		for(String parsedQuery : parsedQueriesStr) {
@@ -52,21 +54,30 @@ public class WordNetQueryProcessor {
 			}
 		}
 		
-		setBooleanQuery(parser, allSynonyms);
+		setBooleanQuery(allSynonyms);
 	
 		
 	}
 	
-	private void setBooleanQuery(QueryParser parser, HashSet<String> synonyms) throws ParseException{
+	private Query proximityAdder(Query query) throws ParseException {
+		String queryStr = "\"" + query.toString(parser.getField()) + "\"~10";
+		
+		Query queryWithProximity = parser.parse(queryStr);
+		queryWithProximity.setBoost(proximityBoostVal);
+		return queryWithProximity;
+	}
+	private void setBooleanQuery(HashSet<String> synonyms) throws ParseException{
 		booleanQuery = new BooleanQuery();
 		booleanQuery.add(originalQuery, BooleanClause.Occur.MUST);
 		if (!synonyms.isEmpty()) {
 			for (String eachSynonym : synonyms) {
 				Query synonymQuery = parser.parse(eachSynonym);
-				synonymQuery.setBoost(boostVal);
+				synonymQuery.setBoost(synonymBoostVal);
 				booleanQuery.add(synonymQuery, BooleanClause.Occur.SHOULD);
 			}
 		}
+		//add the proximity search too
+		booleanQuery.add(proximityAdder(originalQuery), BooleanClause.Occur.SHOULD);
 	}
 	
 	private HashSet<String> getAllSynonyms(String expandingWord) throws IOException{
