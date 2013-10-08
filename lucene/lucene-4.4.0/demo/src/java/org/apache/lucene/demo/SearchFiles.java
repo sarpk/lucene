@@ -116,7 +116,6 @@ public class SearchFiles {
       if (line.length() == 0) {
         break;
       }
-
       
       Query query = parser.parse(line);
       
