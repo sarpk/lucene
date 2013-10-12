@@ -36,6 +36,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.Similarity;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
@@ -54,7 +55,7 @@ public class SearchFiles {
       System.exit(0);
     }
 
-    String index = "C:\\crawl\\experiment\\index";
+    String index = "C:\\crawl3\\another\\index";
     String field = "contents";
     String queries = null;
     int repeat = 0;

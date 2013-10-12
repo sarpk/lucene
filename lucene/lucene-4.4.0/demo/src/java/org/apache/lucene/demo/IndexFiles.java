@@ -62,8 +62,8 @@ public class IndexFiles {
     String indexPath = "index";
     String docsPath = null;
     boolean create = true;
-    indexPath = "C:\\crawl\\experiment\\index";
-    docsPath = "C:\\crawl\\experiment\\docs";
+    indexPath = "C:\\crawl3\\another\\index";
+    docsPath = "C:\\crawl3\\another\\download";
     for(int i=0;i<args.length;i++) {
       if ("-index".equals(args[i])) {
         indexPath = args[i+1];
@@ -177,7 +177,9 @@ public class IndexFiles {
         }
 
         try {
-
+        	if(file.toString().endsWith(".dat")) {
+        		return ;
+        	}
           // make a new, empty document
           Document doc = new Document();
 
@@ -205,7 +207,9 @@ public class IndexFiles {
 
           if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
             // New index, so we just add the document (no old document can be there):
+        	  
             System.out.println("adding " + file);
+        	 
             /*String contents = readFile(file.toString(), StandardCharsets.UTF_8).toLowerCase();
             if (contents.contains("citation")) {
             	textField.setBoost(0.001f);
