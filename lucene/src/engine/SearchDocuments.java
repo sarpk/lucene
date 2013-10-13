@@ -26,85 +26,89 @@ import wordnet.WordNetQueryProcessor;
 public class SearchDocuments {
 	private IndexSearcher searcher = null;
 	private BooleanQuery bquery = null;
-	public SearchDocuments(String collectNewsFeeds, String qString, int hits) {
-		String index = collectNewsFeeds + "/index";
+
+	public SearchDocuments(String collectNewsFeeds, String webPath,
+			String qString, int hits) {
+		String index = collectNewsFeeds + "/" + webPath + "/index";
 		String field = "contents";
 		String line = qString;
 		int repeat = 0;
 		boolean raw = false;
 		// String queryString = null;
 		int hitsPerPage = hits;
-		IndexReader reader = null;
-		try {
-			reader = DirectoryReader.open(FSDirectory.open(new File(index)));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		IndexSearcher searcher = new IndexSearcher(reader);
-		Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_44);
+		final File docDir = new File(index);
+		if (!docDir.exists() || !docDir.canRead()) {
+			System.out
+					.println("Document directory '"
+							+ docDir.getAbsolutePath()
+							+ "' does not exist or is not readable, please check the path");
+		} else {
 
-		QueryParser parser = new QueryParser(Version.LUCENE_44, field, analyzer);
-
-		Query query = null;
-		try {
-			query = parser.parse(line);
-		} catch (ParseException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-		WordNetQueryProcessor queryProcess = null;
-		try {
-			queryProcess = new WordNetQueryProcessor(parser, line);
-		} catch (ParseException | IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		System.out.println("Searching for: " + query.toString(field));
-
-		if (repeat > 0) { // repeat & time as benchmark
-			Date start = new Date();
-			for (int i = 0; i < repeat; i++) {
-				try {
-					searcher.search(query, null, 100);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			IndexReader reader = null;
+			try {
+				reader = DirectoryReader
+						.open(FSDirectory.open(new File(index)));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			Date end = new Date();
-			System.out.println("Time: " + (end.getTime() - start.getTime())
-					+ "ms");
-		}
-		bquery = queryProcess.getBooleanQuery();
-		this.searcher = searcher;
-		/*try {
-			//doPagingSearch(searcher, bquery, hitsPerPage, raw);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+			IndexSearcher searcher = new IndexSearcher(reader);
+			Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_44);
 
-	/*	try {
-			reader.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+			QueryParser parser = new QueryParser(Version.LUCENE_44, field,
+					analyzer);
+
+			Query query = null;
+			try {
+				query = parser.parse(line);
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+			WordNetQueryProcessor queryProcess = null;
+			try {
+				queryProcess = new WordNetQueryProcessor(parser, line);
+			} catch (ParseException | IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			System.out.println("Searching for: " + query.toString(field));
+
+			if (repeat > 0) { // repeat & time as benchmark
+				Date start = new Date();
+				for (int i = 0; i < repeat; i++) {
+					try {
+						searcher.search(query, null, 100);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				Date end = new Date();
+				System.out.println("Time: " + (end.getTime() - start.getTime())
+						+ "ms");
+			}
+			bquery = queryProcess.getBooleanQuery();
+			this.searcher = searcher;
+			/*
+			 * try { //doPagingSearch(searcher, bquery, hitsPerPage, raw); }
+			 * catch (IOException e) { // TODO Auto-generated catch block
+			 * e.printStackTrace(); }
+			 */
+
+			/*
+			 * try { reader.close(); } catch (IOException e) { // TODO
+			 * Auto-generated catch block e.printStackTrace(); }
+			 */
+		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	public List<String> getPages(int startIndex, int endIndex) {
 		TopDocs results = null;
+		if (bquery == null && searcher == null) {
+			return null;
+		}
 		try {
 			results = searcher.search(bquery, 5);
 		} catch (IOException e) {
@@ -115,7 +119,7 @@ public class SearchDocuments {
 		int numTotalHits = results.totalHits;
 		int minStart = Math.min(startIndex, numTotalHits);
 		int minEnd = Math.min(endIndex, numTotalHits);
-		//System.out.println("Total results are " + numTotalHits);
+		// System.out.println("Total results are " + numTotalHits);
 		List<String> getRes = new ArrayList<String>();
 		for (int i = minStart; i < minEnd; i++) {
 			Document doc = null;
@@ -130,18 +134,16 @@ public class SearchDocuments {
 		}
 		return getRes;
 	}
-	
-	
-	static void doPagingSearch(IndexSearcher searcher,
-			BooleanQuery bquery, int hitsPerPage, boolean raw)
-			throws IOException {
+
+	static void doPagingSearch(IndexSearcher searcher, BooleanQuery bquery,
+			int hitsPerPage, boolean raw) throws IOException {
 		/*
 		 * query2.setBoost(0.1f); // Collect enough docs to show 5 pages
 		 * BooleanQuery booleanQuery = new BooleanQuery();
 		 * booleanQuery.add(query, BooleanClause.Occur.MUST);
 		 * booleanQuery.add(query2, BooleanClause.Occur.SHOULD);
 		 */
-		TopDocs results = searcher.search(bquery, 5 );
+		TopDocs results = searcher.search(bquery, 5);
 		ScoreDoc[] hits = results.scoreDocs;
 
 		int numTotalHits = results.totalHits;

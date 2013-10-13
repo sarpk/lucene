@@ -29,9 +29,9 @@ import org.apache.lucene.util.Version;
 
 public class IndexDocuments {
 
-	public IndexDocuments(String collectNewsFeeds) {
-		String indexPath = collectNewsFeeds + "/index";
-		String docsPath = collectNewsFeeds + "/download";
+	public IndexDocuments(String collectNewsFeeds, String webRoot) {
+		String indexPath = collectNewsFeeds + "/" + webRoot + "/index";
+		String docsPath = collectNewsFeeds + "/" + webRoot + "/download";
 		;
 		boolean create = true;
 		final File docDir = new File(docsPath);
@@ -42,7 +42,7 @@ public class IndexDocuments {
 							+ "' does not exist or is not readable, please check the path");
 		} else {
 
-			//Date start = new Date();
+			// Date start = new Date();
 			try {
 				System.out.println("Indexing to directory '" + indexPath
 						+ "'...");
@@ -81,9 +81,9 @@ public class IndexDocuments {
 
 				writer.close();
 
-				//Date end = new Date();
-				//System.out.println(end.getTime() - start.getTime()
-					//	+ " total milliseconds");
+				// Date end = new Date();
+				// System.out.println(end.getTime() - start.getTime()
+				// + " total milliseconds");
 
 			} catch (IOException e) {
 				System.out.println(" caught a " + e.getClass()
