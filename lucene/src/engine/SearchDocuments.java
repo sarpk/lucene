@@ -106,15 +106,18 @@ public class SearchDocuments {
 
 	public List<String> getPages(int startIndex, int endIndex) {
 		TopDocs results = null;
+		int indDiff = Math.abs(endIndex - startIndex);
 		if (bquery == null && searcher == null) {
+			System.out.println("Returning null for getPages");
 			return null;
 		}
 		try {
-			results = searcher.search(bquery, 5);
+			results = searcher.search(bquery, 5 * indDiff);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		//System.out.println("in getpages");
 		ScoreDoc[] hits = results.scoreDocs;
 		int numTotalHits = results.totalHits;
 		int minStart = Math.min(startIndex, numTotalHits);
@@ -126,11 +129,13 @@ public class SearchDocuments {
 			try {
 				doc = searcher.doc(hits[i].doc);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				System.out.println("error occured within getPages");
 				e.printStackTrace();
 			}
-			String path = doc.get("path");
-			getRes.add(path);
+			if (doc != null) {
+				String path = doc.get("path");
+				getRes.add(path);
+			}
 		}
 		return getRes;
 	}
