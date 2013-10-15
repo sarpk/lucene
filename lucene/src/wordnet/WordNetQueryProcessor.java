@@ -28,7 +28,7 @@ public class WordNetQueryProcessor {
 	private QueryParser parser = null;
 	private static float synonymBoostVal = 0.1f;
 	private static float proximityBoostVal = 2.0f;
-	private static String wnhome = "C:\\Program Files (x86)\\WordNet\\2.1\\";
+	public static String wnhome = "C:\\Program Files (x86)\\WordNet\\2.1\\";
 	public WordNetQueryProcessor(QueryParser parser, String queryString) throws ParseException, IOException {
 		// set the query
 		originalQuery = parser.parse(queryString);
