@@ -28,7 +28,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.memory.MemoryIndex;
+//import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 

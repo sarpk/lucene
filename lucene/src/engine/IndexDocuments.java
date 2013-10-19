@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -159,9 +160,13 @@ public class IndexDocuments {
 					// encoding.
 					// If that's not the case searching for special characters
 					// will fail.
-					Field textField = new TextField("contents",
+					String strContents = readFile(file.getAbsolutePath(),
+							StandardCharsets.UTF_8);
+					Field textField = new TextField("contents", strContents, Field.Store.YES);
+					
+					/*Field textField = new TextField("contents",
 							new BufferedReader(new InputStreamReader(fis,
-									"UTF-8")));
+									"UTF-8")));*/
 					doc.add(textField);
 
 					if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {

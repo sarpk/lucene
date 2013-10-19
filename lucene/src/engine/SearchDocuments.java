@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -18,6 +19,12 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.search.highlight.TextFragment;
+import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
@@ -26,6 +33,7 @@ import wordnet.WordNetQueryProcessor;
 public class SearchDocuments {
 	private IndexSearcher searcher = null;
 	private BooleanQuery bquery = null;
+	private Analyzer analyzer = null;
 
 	public SearchDocuments(String collectNewsFeeds, String webPath,
 			String qString, int hits) {
@@ -53,7 +61,7 @@ public class SearchDocuments {
 				e.printStackTrace();
 			}
 			IndexSearcher searcher = new IndexSearcher(reader);
-			Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_44);
+			analyzer = new EnglishAnalyzer(Version.LUCENE_44);
 
 			QueryParser parser = new QueryParser(Version.LUCENE_44, field,
 					analyzer);
@@ -117,7 +125,7 @@ public class SearchDocuments {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//System.out.println("in getpages");
+		// System.out.println("in getpages");
 		ScoreDoc[] hits = results.scoreDocs;
 		int numTotalHits = results.totalHits;
 		int minStart = Math.min(startIndex, numTotalHits);
@@ -136,6 +144,77 @@ public class SearchDocuments {
 				String path = doc.get("path");
 				getRes.add(path);
 			}
+		}
+		return getRes;
+	}
+
+	public List<String> getHighlights(int startIndex, int endIndex) {
+		TopDocs results = null;
+		int indDiff = Math.abs(endIndex - startIndex);
+		if (bquery == null && searcher == null) {
+			System.out.println("Returning null for getPages");
+			return null;
+		}
+		try {
+			results = searcher.search(bquery, 5 * indDiff);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// System.out.println("in getpages");
+		SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
+		Highlighter highlighter = new Highlighter(htmlFormatter,
+				new QueryScorer(bquery));
+
+		ScoreDoc[] hits = results.scoreDocs;
+		int numTotalHits = results.totalHits;
+		int minStart = Math.min(startIndex, numTotalHits);
+		int minEnd = Math.min(endIndex, numTotalHits);
+		// System.out.println("Total results are " + numTotalHits);
+		List<String> getRes = new ArrayList<String>();
+		for (int i = minStart; i < minEnd; i++) {
+			Document doc = null;
+			try {
+				doc = searcher.doc(hits[i].doc);
+			} catch (IOException e) {
+				System.out.println("error occured within getPages");
+				e.printStackTrace();
+			}
+
+			int id = hits[i].doc;
+			String text = doc.get("contents");
+			TokenStream tokenStream = null;
+			try {
+				tokenStream = TokenSources.getAnyTokenStream(
+						searcher.getIndexReader(), id, "contents", analyzer);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			TextFragment[] frag = null;
+			try {
+				try {
+					frag = highlighter.getBestTextFragments(tokenStream, text,
+							false, 4);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} catch (InvalidTokenOffsetsException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			String highlightedRes = "";
+			for (int j = 0; j < frag.length; j++) {
+				if ((frag[j] != null) && (frag[j].getScore() > 0)) {
+					highlightedRes += frag[j].toString();
+					// System.out.println((frag[j].toString()));
+				}
+			}
+			highlightedRes = highlightedRes.replaceAll("\\s+", " ");
+
+			getRes.add(highlightedRes);
+
 		}
 		return getRes;
 	}

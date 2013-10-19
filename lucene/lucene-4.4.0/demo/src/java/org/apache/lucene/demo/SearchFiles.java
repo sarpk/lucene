@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.util.Date;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -35,8 +36,12 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.similarities.Similarity;
-import org.apache.lucene.store.Directory;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.search.highlight.TextFragment;
+import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 
@@ -55,7 +60,8 @@ public class SearchFiles {
       System.exit(0);
     }
 
-    String index = "C:\\crawl3\\another\\index";
+    //String index = "C:\\crawl3\\another\\index";
+    String index = "C:\\crawl\\experiment\\index";
     String field = "contents";
     String queries = null;
     int repeat = 0;
@@ -160,7 +166,10 @@ public class SearchFiles {
 		booleanQuery.add(query2, BooleanClause.Occur.SHOULD);*/
     TopDocs results = searcher.search(bquery, 5 * hitsPerPage);
     ScoreDoc[] hits = results.scoreDocs;
-  
+    SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
+    Highlighter highlighter = new Highlighter(htmlFormatter, new QueryScorer(bquery));
+    Analyzer analyzer = new EnglishAnalyzer(Version.LUCENE_44);
+    
     int numTotalHits = results.totalHits;
     System.out.println(numTotalHits + " total matching documents");
 
@@ -192,7 +201,27 @@ public class SearchFiles {
         if (path != null) {
         	
           System.out.println((i+1) + ". " + path);
+          String highlightedRes = "";
+          int id = hits[i].doc;
+          String text = doc.get("contents");
+          TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), id, "contents", analyzer);
+          TextFragment[] frag = null;
+		try {
+			frag = highlighter.getBestTextFragments(tokenStream, text, false, 2);
+		} catch (InvalidTokenOffsetsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+          for (int j = 0; j < frag.length; j++) {
+              if ((frag[j] != null) && (frag[j].getScore() > 0)) {
+            	  highlightedRes += frag[j].toString();
+                  //System.out.println((frag[j].toString()));
+              }
+          }
+          highlightedRes = highlightedRes.replaceAll("\\s+", " ");
+          System.out.println(highlightedRes);
           //System.out.println(searcher.explain(bquery, hits[i].doc).toString());
+          //System.out.println(doc.get("contents").toString());
           
           String title = doc.get("title");
           if (title != null) {
